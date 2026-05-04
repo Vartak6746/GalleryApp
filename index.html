@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    :root {
+        --bg: #0A0A0C;
+        --surface: #16161A;
+        --surface-glass: rgba(22, 22, 26, 0.75);
+        --border: rgba(245, 19, 124, 0.15);
+        --accent: #F5137C;
+        --accent-hover: #FF3A9C;
+        --text-main: #FFFFFF;
+        --text-muted: #8E8E93;
+        --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html { 
+        width: 100%; height: 100%; 
+        background: var(--bg); overflow: hidden; 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        color: var(--text-main);
+    }
+
+    /* --- 👻 GHOST MODE --- */
+    body.ghost-mode { cursor: none; }
+    body.ghost-mode #top-bar, 
+    body.ghost-mode #bottom-controls,
+    body.ghost-mode #video-controls,
+    body.ghost-mode .minimal-counter { 
+        opacity: 0 !important; pointer-events: none; transform: translateY(10px) translateX(-50%);
+    }
+    body.ghost-mode #top-bar { transform: translateY(-10px); }
+    body.ghost-mode .minimal-counter { transform: translateY(10px) translateX(0); }
+
+    #ambient-glow {
+        position: fixed; top: -10%; left: -10%; width: 120%; height: 120%;
+        background-size: cover; background-position: center; background-repeat: no-repeat;
+        filter: blur(90px) brightness(0.4);
+        z-index: 1; transition: background-image 1.5s ease-in-out, opacity 0.8s ease;
+        opacity: 0; pointer-events: none;
+    }
+
+    #container { 
+        position: relative; width: 100vw; height: calc(100vh - 140px); margin-top: 60px;
+        z-index: 2; background: transparent; 
+    }  
+
+    /* --- 🎬 DUAL BUFFER MEDIA LAYERS --- */
+    .media-layer {
+        position: absolute; top: 0; left: 0; width: 100vw; height: calc(100vh - 140px); 
+        object-fit: contain; opacity: 0; transition: opacity 0.4s ease-in-out;
+        z-index: 10; pointer-events: none;
+    }
+    .media-layer.active { opacity: 1; z-index: 20; pointer-events: auto; }
+
+    /* --- HOMEPAGE --- */
+    #homepage {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: var(--bg); z-index: 9000; transition: opacity 0.5s ease; overflow: hidden;
+    }
+
+    #folder-grid { 
+        display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 50vh; 
+        width: 100vw; height: 100vh; gap: 0; 
+    }
+
+    .folder-card {
+        background: var(--bg); border: none; border-radius: 0; 
+        text-align: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
+        position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
+        width: 100%; height: 100%;
+    }
+    .folder-card:hover { z-index: 10; transform: scale(1.05); box-shadow: 0 30px 60px rgba(0,0,0,0.9); }
+    
+    .folder-bg-media { 
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+        object-fit: cover; z-index: 1; filter: brightness(0.4); transition: all 0.6s ease; 
+    }
+    .folder-card:hover .folder-bg-media { filter: brightness(0.85); transform: scale(1.1); }
+    
+    .folder-card-content { 
+        position: relative; z-index: 2; width: 100%; padding: 40px 20px 30px 20px; 
+        background: linear-gradient(to top, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0) 100%);
+        display: flex; flex-direction: column; gap: 6px;
+        transform: translateY(15px); opacity: 0.7; transition: all 0.4s ease; pointer-events: none;
+    }
+    .folder-card:hover .folder-card-content { transform: translateY(0); opacity: 1; }
+    .folder-name { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; }
+    .folder-stats { font-size: 0.8rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* --- 🧩 SQUARE GRID VIEW --- */
+    #grid-view { 
+        position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); 
+        background: var(--bg); display: none; z-index: 1000; overflow-y: auto; padding: 30px 40px; 
+    }
+    #grid-content { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; width: 100%; max-width: 1400px; margin: 0 auto; padding-bottom: 100px; }
+    .grid-item { 
+        width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; 
+        border: 2px solid transparent; transition: all 0.2s ease; cursor: pointer; opacity: 0.8;
+    }
+    .grid-item:hover { opacity: 1; }
+    .grid-item img, .grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none;}
+    .grid-item.selected-thumb { border-color: var(--accent) !important; transform: scale(1.03); z-index: 1001; opacity: 1; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+
+    /* --- 🧭 TOP NAVIGATION BAR --- */
+    #top-bar {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 60px;
+        background: var(--surface-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10005;
+        display: none; justify-content: space-between; align-items: center; padding: 0 30px;
+        transition: opacity 0.4s ease;
+    }
+
+    .nav-group { display: flex; align-items: center; gap: 15px; }
+
+    .nav-btn {
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);
+        color: var(--text-main); padding: 8px 16px; border-radius: var(--radius);
+        font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--border); }
+    .nav-btn.primary { background: rgba(245, 19, 124, 0.15); color: var(--accent); border-color: var(--border); }
+    .nav-btn.primary:hover { background: var(--accent); color: white; }
+
+    /* DROPDOWNS */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-content {
+        display: none; position: absolute; top: 110%; left: 0;
+        background: var(--surface); min-width: 200px; border-radius: var(--radius);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.8); z-index: 20000;
+        border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
+    }
+    .dropdown-content.show { display: flex; flex-direction: column; }
+    .dropdown-item {
+        padding: 12px 16px; color: var(--text-muted); cursor: pointer;
+        font-size: 0.9rem; font-weight: 500; transition: background 0.2s, color 0.2s;
+    }
+    .dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+    .dropdown-item.active { background: rgba(245, 19, 124, 0.15); color: var(--accent); border-left: 3px solid var(--accent); }
+
+    /* --- 🎥 VIDEO SCRUBBER --- */
+    #video-controls {
+        position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+        background: var(--surface-glass); padding: 8px 24px; border-radius: 30px;
+        border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        z-index: 10005; display: none; align-items: center; gap: 15px; width: 50%; min-width: 400px; max-width: 800px;
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    #vid-time {
+        font-size: 0.85rem; font-family: monospace; font-weight: 600; color: var(--text-muted); white-space: nowrap;
+    }
+
+    #vid-progress-container {
+        flex-grow: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px;
+        cursor: pointer; position: relative; overflow: hidden; transition: height 0.2s ease;
+    }
+    #vid-progress-container:hover { height: 10px; }
+
+    #vid-progress-bar {
+        position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+        background: var(--accent); border-radius: 4px; pointer-events: none; transition: width 0.1s linear;
+    }
+
+    /* --- 🎮 BOTTOM CONTROL BAR --- */
+    #bottom-controls {
+        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+        background: rgba(18, 18, 20, 0.98); padding: 12px 24px; border-radius: 40px;
+        border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        z-index: 10005; display: none; align-items: center; gap: 15px;
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .control-btn {
+        background: transparent; border: none; color: var(--text-muted);
+        font-size: 1.3rem; cursor: pointer; transition: all 0.2s ease;
+        display: flex; align-items: center; justify-content: center;
+        width: 40px; height: 40px; border-radius: 50%; outline: none;
+    }
+    .control-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); transform: scale(1.1); }
+    .control-btn:active { transform: scale(0.9); }
+    
+    .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 5px; }
+
+    .minimal-counter { 
+        position: absolute; bottom: 35px; left: 40px; 
+        background: var(--surface-glass); padding: 10px 20px; border-radius: 30px; 
+        z-index: 100; font-family: -apple-system, sans-serif; font-weight: 600; 
+        font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.05); color: var(--text-main); 
+        display: none; align-items: center; gap: 15px; transition: opacity 0.5s ease; 
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    #slideshow-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: none; }
+    
+    /* SETTINGS MODAL */
+    #settings-modal {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: var(--surface-glass); border: 1px solid var(--border); 
+        border-radius: 20px; padding: 30px; z-index: 20005; display: none; 
+        flex-direction: column; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+    }
+    .switcher-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 20px; text-align: center; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.9rem; margin-bottom: 15px; color: var(--text-main); }
+    .settings-row input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 8px; border-radius: 8px; width: 80px; text-align: center; outline: none; }
+    .settings-buttons { display: flex; gap: 10px; margin-top: 15px; }
+    .settings-buttons button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-save { background: var(--accent); color: white; }
+    .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+
+    /* ANIMATIONS & POPUPS */
+    #heart-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: var(--surface-glass); padding: 20px 40px; border-radius: 50px; font-size: 1.5em; font-weight: 600; color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); z-index: 600; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; }
+    .heart-animate { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+    #slideshow-progress { position: fixed; top: 60px; left: 0; height: 3px; width: 0%; background: var(--accent); z-index: 10001; pointer-events: none; opacity: 0; }
+    @keyframes fill-bar { from { width: 0%; } to { width: 100%; } }
+    .animate-progress { opacity: 1 !important; animation: fill-bar var(--slide-time) linear forwards; }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="nav-group">
+            <button class="nav-btn primary" onclick="goHome()" title="Back to Homepage">🏠 Home</button>
+            
+            <div class="dropdown">
+                <button class="nav-btn" onclick="toggleDropdown('folder-dropdown')"><span id="folder-btn-text">Select Folder</span> ▾</button>
+                <div class="dropdown-content" id="folder-dropdown"></div>
+            </div>
+
+            <div class="dropdown">
+                <button class="nav-btn" onclick="toggleDropdown('filter-dropdown')"><span id="filter-btn-text">All Media</span> ▾</button>
+                <div class="dropdown-content" id="filter-dropdown"></div>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <button class="nav-btn" onclick="document.getElementById('settings-modal').style.display='flex'" title="Settings">⚙️</button>
+            <button class="nav-btn" onclick="quitApp()" style="color: #ff4d4d; border-color: rgba(255, 77, 77, 0.2);" title="Quit App">🚪 Quit</button>
+        </div>
+    </div>
+
+    <div id="video-controls">
+        <button id="vid-play-btn" class="control-btn" onclick="toggleVideoPlay()" style="width: 30px; height: 30px; font-size: 1rem;">⏸️</button>
+        <span id="vid-time">0:00 / 0:00</span>
+        <div id="vid-progress-container" onclick="scrubVideo(event)">
+            <div id="vid-progress-bar"></div>
+        </div>
+    </div>
+
+    <div id="bottom-controls">
+        <button class="control-btn" onclick="prevMedia()" title="Previous">◀</button>
+        <button class="control-btn" id="play-btn" onclick="toggleSlideshow()" title="Play Slideshow">▶️</button>
+        <button class="control-btn" onclick="nextMedia()" title="Next">▶</button>
+        
+        <div class="divider"></div>
+        
+        <button class="control-btn" id="grid-btn" onclick="toggleGridView()" title="Toggle Grid View">🔲</button>
+        <button class="control-btn" onclick="setWallpaper()" title="Set as Wallpaper">🖼️</button>
+        
+        <div class="divider"></div>
+        
+        <button class="control-btn" id="fav-btn" onclick="triggerFavorite()" title="Save to Favorites" style="font-size: 1.1rem; filter: grayscale(100%);">❌</button>
+    </div>
+
+    <div class="minimal-counter" id="counter-box">
+        <div id="slideshow-dot"></div>
+        <span id="counter-display">0 / 0</span>
+    </div>
+
+    <div id="homepage">
+    
+        <div id="folder-grid"></div>
+    </div>
+
+    <div id="settings-modal">
+        <div class="switcher-title">Preferences</div>
+        <div class="settings-row"><span>Slideshow Speed (ms)</span><input type="number" id="input-speed" step="100"></div>
+        <div class="settings-row"><span>Grid Columns</span><input type="number" id="input-columns" min="4" max="12"></div>
+        <div class="settings-buttons">
+            <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+            <button class="btn-save" onclick="saveSettings()">Save</button>
+        </div>
+    </div>
+
+    <div id="ambient-glow"></div>
+
+    <div id="grid-view">
+        <div id="grid-content"></div>
+    </div>
+
+
+    <div id="container">
+        <img id="img-layer-1" class="media-layer active">
+        <img id="img-layer-2" class="media-layer">
+        <video id="vid-layer-1" class="media-layer" autoplay loop></video>
+        <video id="vid-layer-2" class="media-layer" autoplay loop></video>
+    </div>
+
+    <div id="heart-popup"></div>
+    <div id="slideshow-progress"></div>
+
+    <script src="config.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html>
