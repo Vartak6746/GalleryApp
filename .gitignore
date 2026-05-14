@@ -1,3 +1,16 @@
 config.js
 node_modules/
 .DS_Store
+
+# Electron Packager / Builder outputs
+dist/
+out/
+build/
+release-builds/
+
+# Ignore actual app files just in case
+*.dmg
+*.exe
+*.AppImage
+*.zip
+*.tar.gz

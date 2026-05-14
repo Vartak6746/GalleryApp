@@ -61,17 +61,27 @@
     }
 
     #folder-grid { 
-        display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 50vh; 
-        width: 100vw; height: 100vh; gap: 0; 
+        display: flex; 
+        justify-content: center; /* Centers horizontally */
+        align-items: center;     /* Centers vertically */
+        gap: 50px;               /* Space between your two folders */
+        width: 100vw; 
+        height: 100vh; 
+        overflow: hidden; 
     }
 
     .folder-card {
-        background: var(--bg); border: none; border-radius: 0; 
+        background: var(--bg); border: none; border-radius: 16px; 
         text-align: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
         position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
-        width: 100%; height: 100%;
+        
+        /* Because we removed the grid, we need to give the cards an explicit size */
+        width: 520px; 
+        height: 70vh; 
+        
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
-    .folder-card:hover { z-index: 10; transform: scale(1.05); box-shadow: 0 30px 60px rgba(0,0,0,0.9); }
+    .folder-card:hover { z-index: 10; transform: scale(1.05); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
     
     .folder-bg-media { 
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -80,14 +90,14 @@
     .folder-card:hover .folder-bg-media { filter: brightness(0.85); transform: scale(1.1); }
     
     .folder-card-content { 
-        position: relative; z-index: 2; width: 100%; padding: 40px 20px 30px 20px; 
+        position: relative; z-index: 2; width: 100%; padding: 40px 15px 25px 15px; 
         background: linear-gradient(to top, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0) 100%);
-        display: flex; flex-direction: column; gap: 6px;
-        transform: translateY(15px); opacity: 0.7; transition: all 0.4s ease; pointer-events: none;
+        display: flex; flex-direction: column; gap: 4px;
+        transform: translateY(15px); opacity: 0; transition: all 0.4s ease; pointer-events: none;
     }
     .folder-card:hover .folder-card-content { transform: translateY(0); opacity: 1; }
-    .folder-name { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; }
-    .folder-stats { font-size: 0.8rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .folder-name { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+    .folder-stats { font-size: 0.75rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
     /* --- 🧩 SQUARE GRID VIEW --- */
     #grid-view { 
@@ -200,16 +210,27 @@
         position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
         background: var(--surface-glass); border: 1px solid var(--border); 
         border-radius: 20px; padding: 30px; z-index: 20005; display: none; 
-        flex-direction: column; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+        flex-direction: column; width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
         backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
     }
     .switcher-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 20px; text-align: center; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
     .settings-row { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.9rem; margin-bottom: 15px; color: var(--text-main); }
-    .settings-row input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 8px; border-radius: 8px; width: 80px; text-align: center; outline: none; }
+    .settings-row input[type="number"] { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 8px; border-radius: 8px; width: 80px; text-align: center; outline: none; }
     .settings-buttons { display: flex; gap: 10px; margin-top: 15px; }
     .settings-buttons button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn-save { background: var(--accent); color: white; }
     .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+
+    #homepage-dice-btn {
+        position: absolute; top: 30px; left: 30px;
+        background: var(--surface-glass); border: 1px solid rgba(255,255,255,0.05);
+        width: 55px; height: 55px; border-radius: 50%;
+        font-size: 1.8rem; cursor: pointer; z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #homepage-dice-btn:hover { transform: scale(1.15) rotate(15deg); background: rgba(255,255,255,0.1); }
 
     /* ANIMATIONS & POPUPS */
     #heart-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: var(--surface-glass); padding: 20px 40px; border-radius: 50px; font-size: 1.5em; font-weight: 600; color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); z-index: 600; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; }
@@ -237,7 +258,7 @@
         </div>
 
         <div class="nav-group">
-            <button class="nav-btn" onclick="document.getElementById('settings-modal').style.display='flex'" title="Settings">⚙️</button>
+            <button class="nav-btn" onclick="openSettings()" title="Settings">⚙️</button>
             <button class="nav-btn" onclick="quitApp()" style="color: #ff4d4d; border-color: rgba(255, 77, 77, 0.2);" title="Quit App">🚪 Quit</button>
         </div>
     </div>
@@ -251,18 +272,22 @@
     </div>
 
     <div id="bottom-controls">
-        <button class="control-btn" onclick="prevMedia()" title="Previous">◀</button>
-        <button class="control-btn" id="play-btn" onclick="toggleSlideshow()" title="Play Slideshow">▶️</button>
-        <button class="control-btn" onclick="nextMedia()" title="Next">▶</button>
+        <div id="standard-controls" style="display: flex; align-items: center; gap: 15px;">
+            <button class="control-btn" onclick="prevMedia()" title="Previous">◀</button>
+            <button class="control-btn" id="play-btn" onclick="toggleSlideshow()" title="Play Slideshow">▶️</button>
+            <button class="control-btn" onclick="nextMedia()" title="Next">▶</button>
+            
+            <div class="divider"></div>
+            
+            <button class="control-btn" id="grid-btn" onclick="toggleGridView()" title="Toggle Grid View">🔲</button>
+            <button class="control-btn" onclick="setWallpaper()" title="Set as Wallpaper">🖼️</button>
+            
+            <div class="divider"></div>
+            
+            <button class="control-btn" id="fav-btn" onclick="triggerFavorite()" title="Save to Favorites" style="font-size: 1.1rem; filter: grayscale(100%);">❌</button>
+        </div>
         
-        <div class="divider"></div>
-        
-        <button class="control-btn" id="grid-btn" onclick="toggleGridView()" title="Toggle Grid View">🔲</button>
-        <button class="control-btn" onclick="setWallpaper()" title="Set as Wallpaper">🖼️</button>
-        
-        <div class="divider"></div>
-        
-        <button class="control-btn" id="fav-btn" onclick="triggerFavorite()" title="Save to Favorites" style="font-size: 1.1rem; filter: grayscale(100%);">❌</button>
+        <button id="dice-spin-again" class="control-btn" onclick="spinDice()" title="Spin Again!" style="display: none; font-size: 1.8rem; width: 50px; height: 50px;">🎲</button>
     </div>
 
     <div class="minimal-counter" id="counter-box">
@@ -271,7 +296,8 @@
     </div>
 
     <div id="homepage">
-    
+        <button id="homepage-dice-btn" onclick="spinDice()" title="Random Discovery Mode">🎲</button>
+
         <div id="folder-grid"></div>
     </div>
 
@@ -279,6 +305,13 @@
         <div class="switcher-title">Preferences</div>
         <div class="settings-row"><span>Slideshow Speed (ms)</span><input type="number" id="input-speed" step="100"></div>
         <div class="settings-row"><span>Grid Columns</span><input type="number" id="input-columns" min="4" max="12"></div>
+        
+        <div class="settings-row" style="flex-direction: column; align-items: flex-start; margin-top: 15px;">
+            <span style="margin-bottom: 10px; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Visible Homepage Folders</span>
+            <div id="folder-checklist" style="max-height: 140px; overflow-y: auto; width: 100%; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                </div>
+        </div>
+
         <div class="settings-buttons">
             <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
             <button class="btn-save" onclick="saveSettings()">Save</button>
