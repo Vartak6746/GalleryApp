@@ -18,7 +18,7 @@ let isDiceMode = false;
 let currentLayer = 1;      
 let slideshowTimer = null;
 let isSlideshowActive = false;
-let slideTime = 2500;
+let slideTime = 1500;
 
 // ==========================================
 // 🔀 UTILS & SETUP

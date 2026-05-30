@@ -24,7 +24,10 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  // No more dynamic dock switching! It will just use your default build icon.
+});
 
 ipcMain.handle('get-files', async (event, folderPath) => {
   try {
@@ -41,7 +44,6 @@ ipcMain.handle('set-wallpaper', async (event, filePath) => {
     exec(script);
 });
 
-// App Quit Listener
 ipcMain.handle('quit-app', () => {
     app.quit();
 });
